@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<title>AwesomeSoft Startup</title>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+	<link rel="stylesheet" type="text/css" href="css/app-style.css">
+</head>
+<body>
+	<div class="container">
+			<h1>AwesomeSoft Startup</h1>
+			<h4>REST API </h4>
+			<ol style="list-style-type: none;">
+				<li>GET /student     <div class="pull-right">
+					<button class="btn btn-primary" onclick="getStudents()">Try It</button>
+				</div></li>
+				<pre id="get-students-block">
+					<code id="get-students-response"></code>
+				</pre>
+				<li>POST /student     <div class="pull-right">
+					<button class="btn btn-secondary" onclick="tryPostStudent()">Try It</button><button class="btn btn-primary"  id='postStudentBtn' onclick="postStudent()">Send</button>
+				</div></li>
+				<input type="text" name="" id="post-students-input">
+				<pre id="post-students-block">
+					<code id="post-students-response"></code>
+				</pre>
+				<p id="post-errors"></p>
+
+				<li>PUT /student/<input class="form-control" type="text" placeholder="id" id="put-id">    <div class="pull-right">
+					<button class="btn btn-secondary" onclick="tryPutStudent()">Try It</button><button class="btn btn-primary"  id='putStudentBtn' onclick="putStudent()">Send</button>
+				</div></li>
+				<input type="text" name="" id="put-students-input">
+				<pre id="put-students-block">
+					<code id="put-students-response"></code>
+				</pre>
+				<p id="put-errors"></p>
+
+				<li>DELETE /student/<input class="form-control" type="text" placeholder="id" id="delete-id">     <div class="pull-right">
+					<button class="btn btn-warning" onclick="deleteStudent()">Try It</button>
+				</div></li>
+				<pre id="delete-students-block">
+					<code id="delete-students-response"></code>
+				</pre>
+				<p id="delete-errors"></p>
+	</ol>
+	</div>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript">
+		function getStudents(){
+			$('#get-students-block').show();
+			$('#get-students-response').html('sent GET')
+			$.ajax({
+			  url: "/student",
+			  cache: false,
+			  success: function(data){
+			  	$("#get-students-response").append('\n')
+			    $("#get-students-response").append(syntaxHighlight(JSON.stringify(data).split("\\").join("")));
+			  }
+			});
+		}
+
+		function deleteStudent(){
+			var deleteId = $('#delete-id').val();
+			if(deleteId==undefined || deleteId.length<1){
+				$('#delete-errors').html('Invalid Object ID');
+
+				return;	
+			}
+			$('#delete-students-block').show();
+			$('#delete-students-response').html('sent DELETE')
+			$.ajax({
+			  url: "/student/"+deleteId,
+			  cache: false,
+			  type: "DELETE",
+			  success: function(data){
+			  	$("#delete-students-response").append('\n')
+			    $("#delete-students-response").append(syntaxHighlight(JSON.stringify(data).split("\\").join("")));
+			  }
+			});
+		}
+
+		function tryPostStudent(){
+			
+			$('#post-students-input').show();
+			$('#postStudentBtn').show();		
+		}
+		function postStudent(){
+			$('#post-students-input').show();
+			$('#post-students-block').show();
+			
+
+			var json = $('#post-students-input').val();
+			if(!IsValidJsonString(json)){
+				$('#post-errors').html('the body of the request is not a valid json')
+				return;
+			}
+			var validationResult = ValidateData(JSON.parse(json))
+			if(validationResult!='ok'){
+				$('#post-errors').html(validationResult+' field is required');
+				return;
+			}
+			$('#post-students-response').html('sent POST');
+			$('#post-errors').html('');
+			$.ajax({
+			  url: "/student",
+			  type: "POST",
+  			  data: JSON.parse(json),
+			  cache: false,
+			  success: function(data){
+			  	$("#post-students-response").append('\n')
+			    $("#post-students-response").append(JSON.stringify(data));
+			  }
+			});
+		}
+
+
+
+		function tryPutStudent(){
+			
+			$('#put-students-input').show();
+			$('#putStudentBtn').show();		
+		}
+		function putStudent(){
+			$('#put-students-input').show();
+			$('#put-students-block').show();
+			var putId = $('#put-id').val();
+			if(putId==undefined || putId.length<1){
+				$('#put-errors').html('Invalid Object ID');
+
+				return;	
+			}
+			
+			var json = $('#put-students-input').val();
+			if(!IsValidJsonString(json)){
+				$('#put-errors').html('the body of the request is not a valid json')
+				return;
+			}
+			//var validationResult = ValidateData(JSON.parse(json))
+			if(!ValidatePUTData(JSON.parse(json))){
+				$('#put-errors').html('You need modify at least one field');
+				return;
+			}
+			$('#put-students-response').html('sent PUT')
+			$('#put-errors').html('');
+			$.ajax({
+			  url: "/student/"+putId,
+			  type: "PUT",
+  			  data: JSON.parse(json),
+			  cache: false,
+			  success: function(data){
+			  	$("#put-students-response").append('\n')
+			    $("#put-students-response").append(JSON.stringify(data));
+			  }
+			});
+		}
+
+		function IsValidJsonString(string) {
+		    try {
+		        JSON.parse(string);
+		    } catch (e) {
+		        return false;
+		    }
+		    return true;
+		}
+		function ValidateData(data) {
+		    if(data.firstname==undefined){
+		    	return 'firstname';
+		    }
+		     if(data.lastname==undefined){
+		    	return 'lastname';
+		    }
+		    if(data.date_of_birth==undefined){
+		    	return 'date_of_birth';
+		    }
+		    if(data.contact_number==undefined){
+		    	return 'contact_number';
+		    }
+		    return 'ok';
+		}
+		function ValidatePUTData(data) {
+		    if(data.firstname==undefined
+		    	&&data.lastname==undefined
+		    	&&data.date_of_birth==undefined
+		    	&&data.contact_number==undefined){
+		    	return false;
+		    }
+		    
+		    return true;
+		}
+
+		function syntaxHighlight(json) {
+		    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+		    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+		        var cls = 'number';
+		        if (/^"/.test(match)) {
+		            if (/:$/.test(match)) {
+		                cls = 'key';
+		            } else {
+		                cls = 'string';
+		            }
+		        } else if (/true|false/.test(match)) {
+		            cls = 'boolean';
+		        } else if (/null/.test(match)) {
+		            cls = 'null';
+		        }
+		        return '<span class="' + cls + '">' + match + '</span>';
+		    });
+		}
+
+
+	</script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+</body>
+</html>
+
